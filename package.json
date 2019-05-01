@@ -1,0 +1,30 @@
+{
+	"name": "marks_opensshift_test",
+	"version": "1.0.0",
+	"description": "TELUS Openshift experiments",
+	"scripts": {
+		"start": "node ./app/main.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/telus/marks_opensshift_test.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/telus/marks_opensshift_test/issues"
+	},
+	"homepage": "https://github.com/telus/marks_opensshift_test#readme",
+	"dependencies": {
+		"grpc": "1.20.2",
+		"node-gyp": "4.0.0",
+		"@google-cloud/pubsub": "0.28.1",
+		"fastify": "2.3.0",
+		"fastify-xml-body-parser": "1.0.4",
+		"got": "9.6.0",
+		"grpc": "1.20.0",
+		"js-yaml": "3.13.1",
+		"url-pattern": "1.0.3"
+	}
+}
