@@ -1,54 +1,77 @@
 #!/bin/bash
 
+# Prevent running assemble in builders different than official STI image.
+# The official onbuild image already run npm install and use different
+# application folder.
+[ -d "/usr/src/app" ] && exit 0
+
 set -e
 
-if [ -e "/opt/app-root/etc/generate_container_user" ]; then
-  source /opt/app-root/etc/generate_container_user
-fi
+# FIXME: Linking of global modules is disabled for now as it causes npm failures
+#        under RHEL7
+# Global modules good to have
+# npmgl=$(grep "^\s*[^#\s]" ../etc/npm_global_module_list | sort -u)
+# Available global modules; only match top-level npm packages
+#global_modules=$(npm ls -g 2> /dev/null | perl -ne 'print "$1\n" if /^\S+\s(\S+)\@[\d\.-]+/' | sort -u)
+# List all modules in common
+#module_list=$(/usr/bin/comm -12 <(echo "${global_modules}") | tr '\n' ' ')
+# Link the modules
+#npm link $module_list
 
-
-# Runs the nodejs application server. If the container is run in development mode,
-# hot deploy and debugging are enabled.
-run_node() {
-  echo -e "Environment: \n\tDEV_MODE=${DEV_MODE}\n\tNODE_ENV=${NODE_ENV}\n\tDEBUG_PORT=${DEBUG_PORT}"
-  if [ "$DEV_MODE" == true ]; then
-    echo "Launching via nodemon..."
-    exec nodemon --inspect="$DEBUG_PORT"
+safeLogging () {
+  if [[ $1 =~ http[s]?://.*@.*$ ]]; then
+    echo $1 | sed 's/^.*@/redacted@/'
   else
-    echo "Launching via npm..."
-    exec npm run -d $NPM_RUN
+    echo $1
   fi
-} 
+}
 
-#Set the debug port to 5858 by default.
-if [ -z "$DEBUG_PORT" ]; then
-  export DEBUG_PORT=5858
+shopt -s dotglob
+echo "---> Installing application source..."
+mv /tmp/src/* ./
+
+if [ ! -z $HTTP_PROXY ]; then
+  echo "---> Setting npm http proxy to" $(safeLogging $HTTP_PROXY)
+  npm config set proxy $HTTP_PROXY
 fi
 
-# Set the environment to development by default.
-if [ -z "$DEV_MODE" ]; then
-  export DEV_MODE=false
+if [ ! -z $http_proxy ]; then
+  echo "---> Setting npm http proxy to" $(safeLogging $http_proxy)
+  npm config set proxy $http_proxy
 fi
 
-# If NODE_ENV is not set by the user, then NODE_ENV is determined by whether
-# the container is run in development mode.
-if [ -z "$NODE_ENV" ]; then
-  if [ "$DEV_MODE" == true ]; then
-    export NODE_ENV=development
-  else
-    export NODE_ENV=production
-  fi
+if [ ! -z $HTTPS_PROXY ]; then
+  echo "---> Setting npm https proxy to" $(safeLogging $HTTPS_PROXY)
+  npm config set https-proxy $HTTPS_PROXY
 fi
 
-# If the official dockerhub node image is used, skip the SCL setup below
-# and just run the nodejs server
-if [ -d "/usr/src/app" ]; then
-  run_node
+if [ ! -z $https_proxy ]; then
+  echo "---> Setting npm https proxy to" $(safeLogging $https_proxy)
+  npm config set https-proxy $https_proxy
 fi
 
-# Allow users to inspect/debug the builder image itself, by using:
-# $ docker run -i -t openshift/centos-nodejs-builder --debug
-#
-[ "$1" == "--debug" ] && exec /bin/bash
+if [ -n "$NPM_MIRROR" ]; then
+  echo "---> Setting the npm package mirror to $NPM_MIRROR"
+  npm config set registry $NPM_MIRROR
+fi
 
-run_node
+if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
+  echo "---> Restoring build artifacts..."
+  mv /tmp/artifacts/* ./
+fi
+
+echo "---> Building your Node application from source"
+
+if [ ! -z "$YARN_ENABLED" ]; then
+  echo "---> Using 'yarn install' with YARN_ARGS"
+  yarn install $YARN_ARGS
+else
+  echo "---> Using 'npm install'"
+  npm install -s
+fi
+
+echo "---> Deleting unnecessary things from NPM"
+find /usr/local/lib/node_modules/npm -name test -o -name .bin -type d | xargs rm -rf
+
+# echo "---> Fixing source directory permissions"
+# fix-permissions ./
