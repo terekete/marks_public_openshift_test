@@ -53,22 +53,7 @@ RUN mkdir /src && \
 		mkdir -p $HOME && \
 		mkdir -p $HOME/.npm-global && \
 		mkdir -p $STI_SCRIPTS_PATH && \
-		apk update && \
-		apk add findutils \
-				gettext \
-				bash \
-				python \
-				make \
-				gcc \
-				clang \
-				g++ \
-				linux-headers \
-				binutils-gold \
-				libstdc++ && \
-		rm -rf /var/cache/apk/* && \
-		npm --proxy=$HTTP_PROXY install -g node-gyp && \
-		npm --proxy=$HTTP_PROXY install -g grpc && \
-		npm --proxy=$HTTP_PROXY install -g nodemon
+		apk update
 
 
 
