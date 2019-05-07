@@ -1,0 +1,33 @@
+{
+  "kind": "ImageStream",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "nodejs8-google-pubsub",
+    "annotations": {
+      "openshift.io/display-name": "nodejs8-google-pubsub"
+    }
+  },
+  "spec": {
+    "tags": [
+      {
+        "name": "latest",
+        "annotations": {
+          "openshift.io/display-name": "Node.js 8",
+          "openshift.io/provider-display-name": "Data Supply Chain S2I Image of Node 8 with npm Google PubSub Installed",
+          "description": "Data Supploy Chain S2I Image of Node 8 with npm Google PubSub Installed",
+          "iconClass": "icon-nodejs",
+          "tags": "builder,nodejs",
+          "version": "8",
+          "sampleRepo": "https://github.com/telus/marks_opensshift_test"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "docker.io/gatesma/node8-grpc:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      }
+    ]
+  }
+}
